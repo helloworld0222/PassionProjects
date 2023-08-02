@@ -1,9 +1,10 @@
-require('dotenv/config');
+require('dotenv').config();
 const path = require('path');
 const webpack = require('webpack');
 
 const clientPath = path.join(__dirname, 'client');
 const serverPublicPath = path.join(__dirname, 'server/public');
+console.log('DEV_SERVER_PORT:', process.env.DEV_SERVER_PORT);
 
 module.exports = {
   resolve: {
@@ -21,16 +22,18 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
-            plugins: [
-              '@babel/plugin-transform-react-jsx'
-            ]
+            plugins: ['@babel/plugin-transform-react-jsx']
           }
         }
       }
     ]
   },
   plugins: [
-    new webpack.EnvironmentPlugin(['SPOTIFY_CLIENT_ID', 'SPOTIFY_AUTH_CALLBACK_SENDER', 'SPOTIFY_AUTH_CALLBACK_RECIPIENT'])
+    new webpack.EnvironmentPlugin([
+      'SPOTIFY_CLIENT_ID',
+      'SPOTIFY_AUTH_CALLBACK_SENDER',
+      'SPOTIFY_AUTH_CALLBACK_RECIPIENT'
+    ])
   ],
   devtool: 'source-map',
   devServer: {
@@ -45,7 +48,10 @@ module.exports = {
       }
     },
     proxy: {
-      '/api': `http://localhost:${process.env.PORT}`
+      '/api': {
+        target: 'http://localhost:3001', // Backend server URL
+        changeOrigin: true
+      }
     }
   },
   stats: 'summary',

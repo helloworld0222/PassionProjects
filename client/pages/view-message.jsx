@@ -65,6 +65,15 @@ class ViewMessage extends React.Component {
     M.AutoInit();
 
     const { bottleId } = this.props.routeParams;
+    if (!bottleId) {
+      console.error('bottleId is undefined');
+      // Update the state to show an error message
+      this.setState({ error: 'Bottle ID is missing!', isLoading: false });
+      return;
+    }
+
+    console.log('Bottle ID:', bottleId);
+
     this.setState({ bottleId: bottleId });
     const { user } = this.props.routeParams;
     if (user === 'recipient') {
@@ -76,20 +85,25 @@ class ViewMessage extends React.Component {
 
     fetch(`/api/messages/${bottleId}`)
       .then(response => {
+        if (!response.ok) {
+          // Handle HTTP errors
+          throw new Error(response.statusText);
+        }
         return response.json();
       })
       .then(data => {
         if (data.error) {
           this.setState({ error: data.error });
-          this.setState({ isLoading: false });
         } else {
           this.setState({ message: data });
-          this.setState({ isLoading: false });
-          this.setState({ slideCount: this.state.message.mementos.length + 2 });
         }
+        this.setState({ isLoading: false });
+        this.setState({ slideCount: this.state.message.mementos.length + 2 });
       })
       .catch(error => {
         console.error('There was an unexpected error', error);
+        // Update the state to show an error message
+        this.setState({ error: error.toString(), isLoading: false });
       });
   }
 
@@ -103,7 +117,12 @@ class ViewMessage extends React.Component {
         <>
           <div className="overlay position-absolute"></div>
           <div className="row align-center flex-column position-absolute padding-3rem desktop-style absolute-center">
-            <div className="lds-ring"><div></div><div></div><div></div><div></div></div>
+            <div className="lds-ring">
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
           </div>
         </>
       );
@@ -118,21 +137,46 @@ class ViewMessage extends React.Component {
         <>
           <div className="overlay position-absolute"></div>
           <div className="row align-center flex-column position-absolute padding-3rem desktop-style">
-            <h1 className="font-size-36 no-margin text-center">Unable to find message!</h1>
-            <h2 className="font-size-24 text-center">Click on the parrot to go back!</h2>
-            <Link to={redirect}><img src="/images/parrot.png" className="width-100" /></Link>
+            <h1 className="font-size-36 no-margin text-center">
+              Unable to find message!
+            </h1>
+            <h2 className="font-size-24 text-center">
+              Click on the parrot to go back!
+            </h2>
+            <Link to={redirect}>
+              <img src="/images/parrot.png" className="width-100" />
+            </Link>
           </div>
         </>
       );
     } else {
-      const { messageTitle, recipientName, senderName, mementos, playlistId } = this.state.message;
+      const { messageTitle, recipientName, senderName, mementos, playlistId } =
+        this.state.message;
       return (
         <>
           <div className="slides-overlay position-absolute"></div>
           <div>
-            <IntroSlide isRecipient={this.state.isRecipient} nextSlide={this.nextSlide} title={messageTitle} sender={senderName} recipient={recipientName} />
-            <RenderList isRecipient={this.state.isRecipient} nextSlide={this.nextSlide} previousSlide={this.previousSlide} entries={mementos} currentSlide={this.state.currentSlide} />
-            <PlaylistSlide isRecipient={this.state.isRecipient} previousSlide={this.previousSlide} playlistId={playlistId} currentSlide={this.state.currentSlide} slideIndex={this.state.slideCount - 1} />
+            <IntroSlide
+              isRecipient={this.state.isRecipient}
+              nextSlide={this.nextSlide}
+              title={messageTitle}
+              sender={senderName}
+              recipient={recipientName}
+            />
+            <RenderList
+              isRecipient={this.state.isRecipient}
+              nextSlide={this.nextSlide}
+              previousSlide={this.previousSlide}
+              entries={mementos}
+              currentSlide={this.state.currentSlide}
+            />
+            <PlaylistSlide
+              isRecipient={this.state.isRecipient}
+              previousSlide={this.previousSlide}
+              playlistId={playlistId}
+              currentSlide={this.state.currentSlide}
+              slideIndex={this.state.slideCount - 1}
+            />
           </div>
         </>
       );
@@ -151,7 +195,9 @@ function IntroSlide(props) {
   }
   return (
     <div className="message-slide intro-slide-bg pt-75">
-      <Link to={redirect}><i className="material-icons position-absolute exit-slides">close</i></Link>
+      <Link to={redirect}>
+        <i className="material-icons position-absolute exit-slides">close</i>
+      </Link>
       <div onClick={props.nextSlide} className="next"></div>
       <h1 className="font-size-48 text-center">{props.title}</h1>
       <h2 className="font-size-36 text-center">{`from ${props.sender}`}</h2>
@@ -161,10 +207,11 @@ function IntroSlide(props) {
           <img src="/images/parrot.png" className="width-140" />
         </div>
         <div className="column-half">
-          <p className="font-size-24 text-center width-140">turn up your volume!</p>
+          <p className="font-size-24 text-center width-140">
+            turn up your volume!
+          </p>
         </div>
       </div>
-
     </div>
   );
 }
@@ -183,14 +230,25 @@ class ContentSlide extends React.Component {
 
       return (
         <div className="padding-1rem message-slide content-slide-yellow pt-75">
-          <Link to={redirect}><i className="material-icons position-absolute exit-slides">close</i></Link>
+          <Link to={redirect}>
+            <i className="material-icons position-absolute exit-slides">
+              close
+            </i>
+          </Link>
           <div onClick={this.props.nextSlide} className="next"></div>
           <div onClick={this.props.previousSlide} className="previous"></div>
-          <h1 className="font-size-36 text-center no-margin-top">{this.props.memento.title}</h1>
+          <h1 className="font-size-36 text-center no-margin-top">
+            {this.props.memento.title}
+          </h1>
           <div className="row justify-center">
-            <img className="materialboxed img-container" src={this.props.memento.image} />
+            <img
+              className="materialboxed img-container"
+              src={this.props.memento.image}
+            />
           </div>
-          <p className="font-size-36 text-center">{this.props.memento.caption}</p>
+          <p className="font-size-36 text-center">
+            {this.props.memento.caption}
+          </p>
         </div>
       );
     }
@@ -201,14 +259,19 @@ ContentSlide.contextType = AppContext;
 
 function RenderList(props) {
   const entries = props.entries;
-  const slideItems = entries.map(slide =>
+  const slideItems = entries.map(slide => (
     <li key={slide.slideIndex}>
-      <ContentSlide isRecipient={props.isRecipient} nextSlide={props.nextSlide} previousSlide={props.previousSlide} memento={slide} slideIndex={slide.slideIndex} currentSlide={props.currentSlide} />
+      <ContentSlide
+        isRecipient={props.isRecipient}
+        nextSlide={props.nextSlide}
+        previousSlide={props.previousSlide}
+        memento={slide}
+        slideIndex={slide.slideIndex}
+        currentSlide={props.currentSlide}
+      />
     </li>
-  );
-  return (
-    <ul className="position-fixed">{slideItems}</ul>
-  );
+  ));
+  return <ul className="position-fixed">{slideItems}</ul>;
 }
 
 class PlaylistSlide extends React.Component {
@@ -263,15 +326,30 @@ class PlaylistSlide extends React.Component {
       }
       return (
         <div className="padding-1rem message-slide playlist-slide-bg pt-75">
-          <Link to={redirect}><i className="material-icons position-absolute exit-slides">close</i></Link>
+          <Link to={redirect}>
+            <i className="material-icons position-absolute exit-slides">
+              close
+            </i>
+          </Link>
           <div onClick={this.props.previousSlide} className="previous"></div>
-          <h1 className="font-size-36 text-center no-margin-top mb-12">Save this playlist?</h1>
+          <h1 className="font-size-36 text-center no-margin-top mb-12">
+            Save this playlist?
+          </h1>
           <div className="row justify-center align-center no-margin">
-            <a onClick={this.handleClick}><img src="/images/shell.png" className="width-60" /></a>
+            <a onClick={this.handleClick}>
+              <img src="/images/shell.png" className="width-60" />
+            </a>
             <p className="font-size-24 pl-1rem">{saved}</p>
           </div>
           <div className="row justify-center padding-1rem">
-            <iframe src={playlistLink} width="100%" height="380" frameBorder="0" allowFullScreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+            <iframe
+              src={playlistLink}
+              width="100%"
+              height="380"
+              frameBorder="0"
+              allowFullScreen=""
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            ></iframe>
           </div>
         </div>
       );
